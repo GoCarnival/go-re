@@ -121,8 +121,24 @@ func (b *Builder) Find(value string) *Builder {
 	return b.Then(value)
 }
 
+// Maybe prefer one
 func (b *Builder) Maybe(value string) *Builder {
 	return b.Then(value).Add("?")
+}
+
+// MaybePreferZero prefer zero
+func (b *Builder) MaybePreferZero(value string) *Builder {
+	return b.Then(value).Add("??")
+}
+
+// ZeroOrOne prefer one
+func (b *Builder) ZeroOrOne(value string) *Builder {
+	return b.Maybe(value)
+}
+
+// ZeroOrOnePreferZero prefer one
+func (b *Builder) ZeroOrOnePreferZero(value string) *Builder {
+	return b.MaybePreferZero(value)
 }
 
 func (b *Builder) MaybeWithBuilder(regex *Builder) *Builder {
@@ -267,12 +283,24 @@ func (b *Builder) Multiple(value string, count ...int) *Builder {
 	}
 }
 
+// OneOrMore prefer more
 func (b *Builder) OneOrMore() *Builder {
 	return b.Add("+")
 }
 
+// OneOrMorePreferFewer prefer fewer
+func (b *Builder) OneOrMorePreferFewer() *Builder {
+	return b.Add("+?")
+}
+
+// ZeroOrMore prefer more
 func (b *Builder) ZeroOrMore() *Builder {
 	return b.Add("*")
+}
+
+// ZeroOrMorePreferFewer prefer fewer
+func (b *Builder) ZeroOrMorePreferFewer() *Builder {
+	return b.Add("*?")
 }
 
 func (b *Builder) Count(count int) *Builder {
@@ -280,8 +308,15 @@ func (b *Builder) Count(count int) *Builder {
 	return b
 }
 
+// CountBetween prefer more
 func (b *Builder) CountBetween(from, to int) *Builder {
 	b.source.WriteString("{" + strconv.Itoa(from) + "," + strconv.Itoa(to) + "}")
+	return b
+}
+
+// CountBetweenPreferFewer prefer more
+func (b *Builder) CountBetweenPreferFewer(from, to int) *Builder {
+	b.source.WriteString("{" + strconv.Itoa(from) + "," + strconv.Itoa(to) + "}?")
 	return b
 }
 

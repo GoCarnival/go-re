@@ -13,29 +13,15 @@ import (
 	"strings"
 )
 
-type PatternMode int
+// PatternFlag info https://github.com/google/re2/wiki/Syntax
+type PatternFlag string
 
 const (
-	UNIX_LINES              PatternMode = 0x01
-	CASE_INSENSITIVE        PatternMode = 0x02
-	COMMENTS                PatternMode = 0x04
-	MULTILINE               PatternMode = 0x08
-	LITERAL                 PatternMode = 0x10
-	DOTALL                  PatternMode = 0x20
-	UNICODE_CASE            PatternMode = 0x40
-	CANON_EQ                PatternMode = 0x80
-	UNICODE_CHARACTER_CLASS PatternMode = 0x100
+	FLAG_CASE_INSENSITIVE        PatternFlag = "i"
+	FLAG_MULTILINE               PatternFlag = "m"
+	FLAG_DOTALL                  PatternFlag = "s"
+	FLAG_UNICODE_CHARACTER_CLASS PatternFlag = "U"
 )
-
-var SYMBOL_MAP = map[string]PatternMode{
-	"d": UNIX_LINES,
-	"i": CASE_INSENSITIVE,
-	"x": COMMENTS,
-	"m": MULTILINE,
-	"s": DOTALL,
-	"u": UNICODE_CASE,
-	"U": UNICODE_CHARACTER_CLASS,
-}
 
 type Expression struct {
 	regexp *regexp.Regexp
@@ -49,7 +35,7 @@ type Builder struct {
 	prefix    *strings.Builder
 	source    *strings.Builder
 	suffix    *strings.Builder
-	modifiers PatternMode
+	modifiers []PatternFlag
 }
 
 func ExpressionBuilder() *Builder {
@@ -57,7 +43,7 @@ func ExpressionBuilder() *Builder {
 		prefix:    &strings.Builder{},
 		source:    &strings.Builder{},
 		suffix:    &strings.Builder{},
-		modifiers: MULTILINE,
+		modifiers: []PatternFlag{},
 	}
 }
 
@@ -71,10 +57,17 @@ func (b *Builder) countOccurrencesOf(where, what string) int {
 
 func (b *Builder) Build() *Expression {
 	sb := strings.Builder{}
+	if len(b.modifiers) > 0 {
+		sb.WriteString("(?")
+		modifiers := strings.Join(lo.Map[PatternFlag, string](b.modifiers, func(item PatternFlag, _ int) string {
+			return string(item)
+		}), "")
+		sb.WriteString(modifiers)
+		sb.WriteString(")")
+	}
 	sb.WriteString(b.prefix.String())
 	sb.WriteString(b.source.String())
 	sb.WriteString(b.suffix.String())
-	//sb.WriteString(strconv.Itoa(int(b.modifiers)))
 	re, err := regexp.Compile(sb.String())
 	if err != nil {
 		panic(err)
@@ -222,25 +215,23 @@ func (b *Builder) Range(args ...string) *Builder {
 	return b.Add(sb.String())
 }
 
-func (b *Builder) AddModifier(modifier string) *Builder {
-	if lo.Contains(lo.Keys(SYMBOL_MAP), modifier) {
-		b.modifiers |= SYMBOL_MAP[modifier]
-	}
+func (b *Builder) AddModifier(modifier PatternFlag) *Builder {
+	b.modifiers = append(b.modifiers, modifier)
 	return b
 }
 
-func (b *Builder) RemoveModifier(modifier string) *Builder {
-	if lo.Contains(lo.Keys(SYMBOL_MAP), modifier) {
-		b.modifiers &= ^SYMBOL_MAP[modifier]
-	}
+func (b *Builder) RemoveModifier(modifier PatternFlag) *Builder {
+	b.modifiers = lo.DropWhile(b.modifiers, func(item PatternFlag) bool {
+		return item == modifier
+	})
 	return b
 }
 
 func (b *Builder) WithAnyCaseEnable(enable bool) *Builder {
 	if enable {
-		b.AddModifier("i")
+		b.AddModifier(FLAG_CASE_INSENSITIVE)
 	} else {
-		b.RemoveModifier("i")
+		b.RemoveModifier(FLAG_CASE_INSENSITIVE)
 	}
 	return b
 }
@@ -249,13 +240,17 @@ func (b *Builder) WithAnyCase() *Builder {
 	return b.WithAnyCaseEnable(true)
 }
 
-func (b *Builder) SearchOneLineEnable(enable bool) *Builder {
+func (b *Builder) SearchMultiLineEnable(enable bool) *Builder {
 	if enable {
-		b.RemoveModifier("m")
+		b.AddModifier(FLAG_MULTILINE)
 	} else {
-		b.Add("m")
+		b.RemoveModifier(FLAG_MULTILINE)
 	}
 	return b
+}
+
+func (b *Builder) SearchMultiLine() *Builder {
+	return b.SearchMultiLineEnable(true)
 }
 
 func (b *Builder) Multiple(value string, count ...int) *Builder {

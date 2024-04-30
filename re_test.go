@@ -56,4 +56,5 @@ func TestGroup(t *testing.T) {
 	t.Log(expression.String())
 	t.Log(expression.Test(str))
 	t.Log(expression.GetText(str, "foo"))
+	t.Log(expression.GetTextGroups(str, 0))
 }

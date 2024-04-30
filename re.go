@@ -426,5 +426,12 @@ func (e *Expression) GetText(str, group string) []string {
 }
 
 func (e *Expression) GetTextGroups(str string, group int) []string {
-	panic("implement me")
+	matches := e.regexp.FindAllStringSubmatch(str, -1)
+	var res []string
+	for _, match := range matches {
+		if len(match) > group {
+			res = append(res, strings.TrimSpace(match[group]))
+		}
+	}
+	return res
 }

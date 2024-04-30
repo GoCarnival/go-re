@@ -435,3 +435,7 @@ func (e *Expression) GetTextGroups(str string, group int) []string {
 	}
 	return res
 }
+
+func (e *Expression) Regexp() *regexp.Regexp {
+	return e.regexp
+}

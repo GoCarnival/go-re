@@ -17,10 +17,10 @@ import (
 type PatternFlag string
 
 const (
-	FLAG_CASE_INSENSITIVE        PatternFlag = "i"
-	FLAG_MULTILINE               PatternFlag = "m"
-	FLAG_DOTALL                  PatternFlag = "s"
-	FLAG_UNICODE_CHARACTER_CLASS PatternFlag = "U"
+	FlagCaseInsensitive       PatternFlag = "i"
+	FlagMultiline             PatternFlag = "m"
+	FlagDotAll                PatternFlag = "s"
+	FlagUnicodeCharacterClass PatternFlag = "U"
 )
 
 type Expression struct {
@@ -245,9 +245,9 @@ func (b *Builder) RemoveModifier(modifier PatternFlag) *Builder {
 
 func (b *Builder) WithAnyCaseEnable(enable bool) *Builder {
 	if enable {
-		b.AddModifier(FLAG_CASE_INSENSITIVE)
+		b.AddModifier(FlagCaseInsensitive)
 	} else {
-		b.RemoveModifier(FLAG_CASE_INSENSITIVE)
+		b.RemoveModifier(FlagCaseInsensitive)
 	}
 	return b
 }
@@ -258,9 +258,9 @@ func (b *Builder) WithAnyCase() *Builder {
 
 func (b *Builder) SearchMultiLineEnable(enable bool) *Builder {
 	if enable {
-		b.AddModifier(FLAG_MULTILINE)
+		b.AddModifier(FlagMultiline)
 	} else {
-		b.RemoveModifier(FLAG_MULTILINE)
+		b.RemoveModifier(FlagMultiline)
 	}
 	return b
 }
